@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  repository_dispatch:
+    types: [website-updated]
   workflow_dispatch:
 
 permissions:
@@ -14,24 +16,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout QuantClaw main repo (website source)
         uses: actions/checkout@v4
+        with:
+          repository: QuantClaw/QuantClaw
+          ref: main
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
+          cache-dependency-path: 'website/package-lock.json'
 
       - name: Install dependencies
+        working-directory: website
         run: npm ci
 
       - name: Build website
+        working-directory: website
         run: npm run docs:build
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .vitepress/dist
+          publish_dir: website/.vitepress/dist
           force_orphan: true
